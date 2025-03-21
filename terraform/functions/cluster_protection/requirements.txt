@@ -1,0 +1,6 @@
+functions-framework==3.*
+google-cloud-container
+pyyaml
+google-cloud-logging
+kubernetes
+google-api-python-client
