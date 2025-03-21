@@ -1,0 +1,8 @@
+.terraform.lock.hcl
+function-source.zip
+terraform.tfstate
+terraform.tfstate.backup
+.terraform/
+cluster_protection_function-source.zip
+discover_existing_function-source.zip
+terraform.tfvars
