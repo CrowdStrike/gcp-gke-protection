@@ -38,6 +38,8 @@ resource "google_cloudfunctions2_function" "discover_existing" {
     environment_variables = {
     TOPIC_NAME = "${google_pubsub_topic.gke_protection_feed_topic.name}"
     PROJECT_ID = "${var.deployment_project_id}"
+    SCOPE = "${var.scope}"
+    SCOPE_IDENTIFIER = "${var.scope_identifier}"
     }
   }
 }

@@ -204,7 +204,7 @@ def download_operator_manifest():
 def deploy_operator(api_client):
     # Check if namespace already exists
     if check_resources_deployed(api_client, "falcon-operator"):
-        logging.info("Namespace exists. Skipping deployment.")
+        logging.info("Pod resources exist... Skipping deployment")
 
     else:
         try:
@@ -237,7 +237,7 @@ def deploy_node_sensor(api_client, manifest_json):
     dynamic_client = dynamic.DynamicClient(api_client)
     # Check if namespace already exists
     if check_resources_deployed(api_client, "falcon-system"):
-        logging.info("Namespace exists. Skipping deployment.")
+        logging.info("Pod resources exist... Skipping deployment")
 
     else:
         try:
@@ -271,7 +271,7 @@ def deploy_falcon_admissions_controller(api_client, manifest_json):
     dynamic_client = dynamic.DynamicClient(api_client)
 
     if check_resources_deployed(api_client, "falcon-kac"):
-        logging.info("Namespace exists. Skipping deployment.")
+        logging.info("Pod resources exist... Skipping deployment")
 
     else:
         try:

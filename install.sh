@@ -72,12 +72,12 @@ deploy_terraform() {
     terraform -chdir=terraform apply \
         --var "falcon_client_id=${1}" \
         --var "falcon_client_secret=${2}" \
-        --var "organization_id=${3}" \
-        --var "location=${4}" \
-        --var "service_account_email=${5}" \
+        --var "location=${3}" \
+        --var "service_account_email=${4}" \
+        --var "scope=${5}" \
+        --var "scope_identifier=${6}" \
         --auto-approve
     if [ $? -ne 0 ]; then
-        print_error "Terraform deployment failed"
         return 1
     fi
 
@@ -88,12 +88,11 @@ deploy_terraform() {
 
 # Function to protect existing clusters
 protect_existing_clusters() {
-    local SCOPE=$1
-    local LOCATION=$2
-    local PROJECT_ID=$3
+    local LOCATION=$1
+    local PROJECT_ID=$2
 
     print_header "Protecting Existing Clusters"
-    print_info "Using scope: $SCOPE"
+    print_info "Using scope: $SCOPE/$SCOPE_IDENTIFIER"
 
     FUNCTION_NAME=$(terraform -chdir=terraform output -raw discover_existing_function_name)
 
@@ -102,11 +101,7 @@ protect_existing_clusters() {
     curl -X POST $URL \
         -H "Authorization: bearer $(gcloud auth print-identity-token)" \
         -H "Content-Type: application/json" \
-        -d '{
-        "scope": "${SCOPE}"
-        }'
-
-    # Add your cluster protection logic here
+        -d '{}'
     return 0
 }
 
@@ -150,13 +145,6 @@ main() {
     print_header "Deployment details"
     print_info "Please provide the following details:"
 
-    echo -en "${BOLD}ORGANIZATION_ID${NC}: "
-    read ORGANIZATION_ID
-    if [ -z "$ORGANIZATION_ID" ]; then
-        print_error "ORGANIZATION_ID is required"
-        exit 1
-    fi
-
     echo -en "${BOLD}LOCATION${NC} [us-central1]: "
     read LOCATION
     LOCATION=${LOCATION:-"us-central1"}
@@ -174,27 +162,35 @@ main() {
         exit 1
     fi
 
+    echo -en "${BOLD}SCOPE (projects/folders/organizations)${NC}: "
+    read SCOPE
+    echo
+    if [ -z "$SCOPE" ]; then
+        print_error "SCOPE is required"
+        exit 1
+    fi
+
+    echo -en "${BOLD}SCOPE_IDENTIFIER${NC}: "
+    read SCOPE_IDENTIFIER
+    echo
+    if [ -z "$SCOPE_IDENTIFIER" ]; then
+        print_error "SCOPE_IDENTIFIER is required"
+        exit 1
+    fi
+
     # Deploy terraform
-    if ! deploy_terraform "$FALCON_CLIENT_ID" "$FALCON_CLIENT_SECRET" "$ORGANIZATION_ID" "$LOCATION" "$SERVICE_ACCOUNT_EMAIL"; then
+    if ! deploy_terraform "$FALCON_CLIENT_ID" "$FALCON_CLIENT_SECRET" "$LOCATION" "$SERVICE_ACCOUNT_EMAIL" "$SCOPE" "$SCOPE_IDENTIFIER"; then
         print_error "Terraform deployment failed. Exiting..."
         exit 1
     fi
-    
 
     # Ask about protecting existing clusters
-    echo -en "\n${BOLD}Do you want to protect existing clusters? (yes/no)${NC}: "
+    echo -en "\n${BOLD}Do you want to discover and protect existing clusters? (yes/no)${NC}: "
     read PROTECT_CLUSTERS
     PROTECT_CLUSTERS=$(echo "$PROTECT_CLUSTERS" | tr '[:upper:]' '[:lower:]')
 
     if [ "$PROTECT_CLUSTERS" = "yes" ]; then
-        echo -en "${BOLD}Please provide the SCOPE value${NC}: "
-        read SCOPE
-        if [ -z "$SCOPE" ]; then
-            print_error "SCOPE is required when protecting existing clusters"
-            exit 1
-        fi
-
-        if ! protect_existing_clusters "$SCOPE" "$LOCATION" "$DEPLOYMENT_PROJECT_ID"; then
+        if ! protect_existing_clusters "$LOCATION" "$DEPLOYMENT_PROJECT_ID"; then
             print_error "Cluster protection failed. Exiting..."
             exit 1
         fi

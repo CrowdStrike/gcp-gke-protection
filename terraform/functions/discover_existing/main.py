@@ -17,7 +17,8 @@ else:
     gcloud_logging_client = google.cloud.logging.Client()
     gcloud_logging_client.setup_logging()
 
-PARENT = ""
+SCOPE = os.environ.get("SCOPE")
+SCOPE_IDENTIFIER = os.environ.get("SCOPE_IDENTIFIER")
 TOPIC_NAME = os.environ.get("TOPIC_NAME")
 PROJECT_ID = os.environ.get("PROJECT_ID")
 
@@ -25,18 +26,17 @@ PROJECT_ID = os.environ.get("PROJECT_ID")
 def main(request):
     logging.debug(f"Request received: {request}")
     logging.info("Discovering existing clusters")
-    projects = list_all_projects(PARENT)
+    logging.debug(f"Scope is {SCOPE}")
+    logging.debug(f"Scope identifier is {SCOPE_IDENTIFIER}")
+
+    if SCOPE == "projects":
+        projects = [ProjectsClient().get_project(name=f"{SCOPE}/{SCOPE_IDENTIFIER}")]
+    else:
+        projects = ProjectsClient().list_projects(parent=f"{SCOPE}/{SCOPE_IDENTIFIER}")
     discovered_clusters = discover_existing_clusters(projects)
     for cluster in discovered_clusters:
-        ...
-        # send_to_pubsub(cluster)
-    return f"{len(discovered_clusters)} existing GKE clusters discovered and to be protected."
-
-
-def list_all_projects(parent):
-    """List all projects in the organization."""
-
-    return ProjectsClient().search_projects()
+        send_to_pubsub(cluster)
+    return f"GKE cluster protection initiated for {len(discovered_clusters)} existing cluster(s). \n"
 
 
 def discover_existing_clusters(projects):
@@ -73,14 +73,13 @@ def send_to_pubsub(cluster):
     payload = {"asset": {"name": cluster.replace("https:", "").replace("/v1", "")}}
     payload_string = json.dumps(payload)
     string_bytes = payload_string.encode("utf-8")
-    # encoded_bytes = base64.b64encode(string_bytes)
-    # encoded_string = encoded_bytes.decode("utf-8")
+
 
     # publish to pbsub topic
     publisher = pubsub_v1.PublisherClient()
     topic_path = publisher.topic_path(PROJECT_ID, TOPIC_NAME)
 
     future = publisher.publish(topic_path, data=string_bytes)
-    print(future.result())
+    logging.debug(future.result())
 
-    print(f"Published message to {topic_path}.")
+    logging.info(f"Published message to {topic_path}.")
