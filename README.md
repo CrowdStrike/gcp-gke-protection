@@ -31,7 +31,7 @@ The following APIs need to be enabled.
 - Cloud Asset
 - Pub Sub
 
-Enable all APIs by visiting [this URL](example.com)
+Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
 
 **Provision Service Account**
 
