@@ -1,18 +1,31 @@
 from google.cloud.container_v1 import ClusterManagerClient
-import google.cloud.logging
-import logging
 from google.cloud.container_v1.types import Cluster
-from kubernetes import client as client, config, dynamic
+from kubernetes import client, config, dynamic
+from kubernetes.client import ApiClient, Configuration, CoreV1Api
 import googleapiclient.discovery
 from tempfile import NamedTemporaryFile
 import base64
 import yaml
+import logging
+from typing import Any, Dict, List, Optional, Union
 
-# client = google.cloud.logging.Client()
-# client.setup_logging()
 
 
-def get_cluster(cluster_name, project_id, zone):
+def get_cluster(cluster_name: str, project_id: str, zone: str) -> Cluster:
+    """
+    Retrieves information about a GKE cluster.
+
+    Args:
+        cluster_name: Name of the GKE cluster
+        project_id: GCP project ID
+        zone: GCP zone where the cluster is located
+
+    Returns:
+        Cluster: Google Cloud Container cluster object
+
+    Raises:
+        Exception: If there's an error retrieving cluster information
+    """
     cluster_path = f"projects/{project_id}/locations/{zone}/clusters/{cluster_name}"
     logging.info(f"Getting cluster information for: {cluster_path}")
 
@@ -29,7 +42,17 @@ def get_cluster(cluster_name, project_id, zone):
         raise
 
 
-def token(*scopes):
+def token(*scopes: str) -> str:
+    """
+    Generates an authentication token for Google Cloud APIs.
+
+    Args:
+        *scopes: Variable length argument list of authentication scopes
+
+    Returns:
+        str: Authentication token
+    """
+
     credentials = googleapiclient._auth.default_credentials()
     scopes = [f"https://www.googleapis.com/auth/{s}" for s in scopes]
     scoped = googleapiclient._auth.with_scopes(credentials, scopes)
@@ -37,7 +60,17 @@ def token(*scopes):
     return scoped.token
 
 
-def kubernetes_api(cluster):
+def kubernetes_api(cluster: Cluster) -> CoreV1Api:
+    """
+    Creates a Kubernetes API client for the specified cluster.
+
+    Args:
+        cluster: Google Cloud Container cluster object
+
+    Returns:
+        CoreV1Api: Kubernetes API client
+    """
+
     config = kubernetes.client.Configuration()
     config.host = f"https://{cluster.control_plane_endpoints_config.dns_endpoint_config.endpoint}"
 
@@ -54,7 +87,20 @@ def kubernetes_api(cluster):
     return api
 
 
-def get_kube_clients(cluster):
+def get_kube_clients(cluster: Cluster) -> ApiClient:
+    """
+    Creates a Kubernetes API client with the appropriate configuration for the cluster.
+
+    Args:
+        cluster: Google Cloud Container cluster object
+
+    Returns:
+        ApiClient: Configured Kubernetes API client
+
+    Notes:
+        This function creates a kubeconfig-style configuration and returns an API client
+        that can be used for various Kubernetes operations.
+    """
 
     SERVER = cluster.endpoint
     CERT = cluster.master_auth.cluster_ca_certificate
