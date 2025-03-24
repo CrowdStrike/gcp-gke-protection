@@ -67,23 +67,59 @@ def main(data, context):
             cluster_status_check_counter += 1
 
         # retrieve manifests
-        node_sensor_manifest = download_and_config_node_sensor_manifest(is_autopilot=is_autopilot)
-        admissions_controller_manifest = download_and_config_admissions_controller_manifest()
         operator_manifest = download_operator_manifest()
+        falcon_deployment_manifest = configure_falcon_deployment_manifest(is_autopilot=is_autopilot)
 
         # get kubernetes clients
         api_client = get_kube_clients(cluster)
 
         # protect cluster
         deploy_operator(api_client)
-        deploy_node_sensor(api_client, node_sensor_manifest)
-        deploy_falcon_admissions_controller(api_client, admissions_controller_manifest)
+        deploy_falcon_manifest(api_client, falcon_deployment_manifest)
         logging.info(f"Cluster {cluster_name} protected.")
         return
 
     except Exception as e:
         logging.error(f"Unexpected error in main function: {str(e)}")
         raise
+
+
+def configure_falcon_deployment_manifest(is_autopilot):
+
+    manifest = {
+        "apiVersion": "falcon.crowdstrike.com/v1alpha1",
+        "kind": "FalconDeployment",
+        "metadata": {"name": "falcon-deployment"},
+        "spec": {
+            "falcon_api": {
+                "client_id": FALCON_CLIENT_ID,
+                "client_secret": FALCON_CLIENT_SECRET,
+                "cloud_region": "us-2",
+            },
+            "deployAdmissionController": True,
+            "deployNodeSensor": True,
+            "deployImageAnalyzer": False,
+            "deployContainerSensor": False,
+        },
+    }
+
+    autopilot_config = {
+        "backend": "bpf",
+        "gke": {"autopilot": True},
+        "resources": {"requests": {"cpu": "750m", "memory": "1.5Gi"}},
+        "tolerations": [{"effect": "NoSchedule", "operator": "Equal", "key": "kubernetes.io/arch", "value": "amd64"}],
+    }
+
+    node_config = {"node": autopilot_config}
+
+    if is_autopilot:
+        manifest["spec"]["falconNodeSensor"] = node_config
+
+    # convert back to yaml and write file
+    manifest_yaml = yaml.dump(manifest)
+    with open("node_sensor_manifest.yaml", "w") as yaml_file:
+        yaml_file.write(manifest_yaml)
+    return manifest
 
 
 def download_and_config_node_sensor_manifest(is_autopilot):
@@ -232,69 +268,45 @@ def deploy_operator(api_client):
         logging.info(f"Pods are in ready state. Proceeding with deployment.")
 
 
-def deploy_node_sensor(api_client, manifest_json):
+def list_falcon_deployments(api_client):
+    logging.info("Checking to see if there are existing Falcon deployments")
 
-    dynamic_client = dynamic.DynamicClient(api_client)
-    # Check if namespace already exists
-    if check_resources_deployed(api_client, "falcon-system"):
-        logging.info("Pod resources exist... Skipping deployment")
+    custom_api = client.CustomObjectsApi(api_client)
 
-    else:
-        try:
-            logging.info("Deploying node sensor")
-            nodesensor_api = dynamic_client.resources.get(
-                api_version="falcon.crowdstrike.com/v1alpha1", kind="FalconNodeSensor"
-            )
-            nodesensor_api.create(body=manifest_json, namespace="falcon-operator")
-        except Exception as e:
-            logging.error(e)
-            raise (e)
+    try:
+        falcon_deployments = custom_api.list_cluster_custom_object(
+            group="falcon.crowdstrike.com", version="v1alpha1", plural="falcondeployments"
+        )
 
-    # Check if pods are ready
-    logging.info("Checking to see if pods in falcon-system are ready.")
+        return falcon_deployments["items"]  # Returns list of FalconDeployments
 
-    pods_ready = check_pods_are_ready(api_client=api_client, namespace_name="falcon-system")
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
 
-    while not pods_ready:
-        logging.info(f"Pods are not yet ready. Sleeping for {POD_READY_STATE_SECONDS_TO_SLEEP} seconds")
-
-        time.sleep(POD_READY_STATE_SECONDS_TO_SLEEP)
-
-        pods_ready = check_pods_are_ready(api_client=api_client, namespace_name="falcon-system")
-
-    if pods_ready:
-        logging.info(f"Pods are in ready state. Proceeding with deployment.")
+            return []
+        else:
+            raise
 
 
-def deploy_falcon_admissions_controller(api_client, manifest_json):
-
+def deploy_falcon_manifest(api_client, manifest_json):
+    custom_api = client.CustomObjectsApi(api_client)
     dynamic_client = dynamic.DynamicClient(api_client)
 
-    if check_resources_deployed(api_client, "falcon-kac"):
-        logging.info("Pod resources exist... Skipping deployment")
+    # Get list of FalconDeployments
+    deployments = list_falcon_deployments(api_client)
 
-    else:
+    if len(deployments) == 0:
+        logging.info("There are no existing Falcon deployments")
+        logging.info("Deploying Falcon")
         try:
             logging.info("Deploying admission controller")
-            admissions_controller_api = dynamic_client.resources.get(
-                api_version="falcon.crowdstrike.com/v1alpha1", kind="FalconAdmission"
+            falcon_deployment = dynamic_client.resources.get(
+                api_version="falcon.crowdstrike.com/v1alpha1", kind="FalconDeployment"
             )
-            admissions_controller_api.create(body=manifest_json, namespace="falcon-operator")
+            falcon_deployment.create(body=manifest_json, namespace="falcon-operator")
         except Exception as e:
             logging.error(e)
             raise (e)
-
-    # Check if pods are ready
-    logging.info("Checking to see if pods in falcon-kac are ready.")
-
-    pods_ready = check_pods_are_ready(api_client=api_client, namespace_name="falcon-kac")
-
-    while not pods_ready:
-        logging.info(f"Pods are not yet ready. Sleeping for {POD_READY_STATE_SECONDS_TO_SLEEP} seconds")
-
-        time.sleep(POD_READY_STATE_SECONDS_TO_SLEEP)
-
-        pods_ready = check_pods_are_ready(api_client=api_client, namespace_name="falcon-kac")
-
-    if pods_ready:
-        logging.info(f"Pods are in ready state. Proceeding with deployment.")
+    else:
+        logging.info("There are existing Falcon deployments. Exiting...")
+        return

@@ -18,8 +18,8 @@ Describe architecture ...
 
 API credentials with the following scopes need to be created
 
-- scope 1
-- scope 2
+- Falcon Container Image
+- Falcon Images Download
 
 ### GCP
 
@@ -37,8 +37,8 @@ Enable all APIs by visiting [this URL](example.com)
 
 A service account needs to be created. The service account must have the following roles at the *Scope* you want to be protected.
 
-- role 1
-- role 2
+- Cloud Asset Viewer
+- Kubernetes Engine Admin
 
 ## Deployment
 
