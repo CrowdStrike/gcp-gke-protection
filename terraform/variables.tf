@@ -24,8 +24,8 @@ variable "scope" {
   type = string
 
   validation {
-    condition     = contains(["organization", "project", "folder"], var.scope)
-    error_message = "Scope must be one of \"organization\", \"project\", or \"folder\""
+    condition     = contains(["organizations", "projects", "folders"], var.scope)
+    error_message = "Scope must be one of \"organizations\", \"projects\", or \"folders\""
   }
 
 }

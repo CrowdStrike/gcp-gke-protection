@@ -1,7 +1,7 @@
 resource "google_cloud_asset_organization_feed" "organization_feed" {
   billing_project = var.deployment_project_id
   org_id          = var.scope_identifier
-  feed_id         = "crowdstrike-gke-protection-feed"
+  feed_id         = "crowdstrike-gke-protection-organization-feed"
   content_type    = "RESOURCE"
 
   asset_types = [
@@ -22,12 +22,12 @@ resource "google_cloud_asset_organization_feed" "organization_feed" {
     description = "Send notifications on cluster events"
   }
 
-  count = var.scope == "organization" ? 1 : 0
+  count = var.scope == "organizations" ? 1 : 0
 }
 
 resource "google_cloud_asset_project_feed" "project_feed" {
   project          = var.scope_identifier
-  feed_id         = "crowdstrike-gke-protection-feed"
+  feed_id         = "crowdstrike-gke-protection-project-feed"
   content_type    = "RESOURCE"
 
   asset_types = [
@@ -48,13 +48,13 @@ resource "google_cloud_asset_project_feed" "project_feed" {
     description = "Send notifications on cluster events"
   }
   
-  count = var.scope == "project" ? 1 : 0
+  count = var.scope == "projects" ? 1 : 0
 }
 
 resource "google_cloud_asset_folder_feed" "folder_feed" {
   billing_project = var.deployment_project_id
   folder          = var.scope_identifier
-  feed_id         = "crowdstrike-gke-protection-feed"
+  feed_id         = "crowdstrike-gke-protection-folder-feed"
   content_type    = "RESOURCE"
 
   asset_types = [
@@ -75,5 +75,5 @@ resource "google_cloud_asset_folder_feed" "folder_feed" {
     description = "Send notifications on cluster events"
   }
   
-  count = var.scope == "folder" ? 1 : 0
+  count = var.scope == "folders" ? 1 : 0
 }
