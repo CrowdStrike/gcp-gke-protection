@@ -14,7 +14,7 @@ The solution resources are built and managed through Terraform. The terraform te
 
 #### _Asset Feed Resources_
 >
-> [!Tip]
+> [!NOTE]
 > Only one of the following resources will be deployed depending on scope you choose.
 
 - crowdstrike-gke-protection-organization-feed - Asset feed that monitors GKE cluster events at organization level
@@ -73,7 +73,7 @@ The following APIs need to be enabled.
 - Cloud Asset
 - Pub Sub
 
-> [!NOTE]
+> [!Tip]
 > Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
 
 **Provision Service Account**
