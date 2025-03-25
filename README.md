@@ -136,7 +136,6 @@ Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md)
 
 ## Support
 
-Write support disclaimer...
 
 For additional support, please see the [SUPPORT.md](SUPPORT.md) file.
 
