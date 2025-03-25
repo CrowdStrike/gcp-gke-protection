@@ -4,11 +4,53 @@
 
 # GKE Cluster Protection
 
-Description of solution ...
+GKE Cluster Protection is a solution that can be used to deploy the Falcon Operator, Falcon Access Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
 
 ## Architecture
 
-Describe architecture ...
+### Deployed Resources
+
+The solution resources are built and managed through Terraform. The terraform templates create the following resources:
+
+#### _Asset Feed Resources_
+>
+> [!NOTE]
+> Only one of the following resources will be deployed depending on scope you choose.
+
+- crowdstrike-gke-protection-organization-feed - Asset feed that monitors GKE cluster events at organization level
+- crowdstrike-gke-protection-project-feed - Asset feed that monitors GKE cluster events at project level
+- crowdstrike-gke-protection-folder-feed - Asset feed that monitors GKE cluster events at folder level
+
+#### _Cloud Functions_
+
+- gke-protection-cluster-protection-function-[random-hex] - Cloud Function that discovers and installs Falcon sensor on Kubernetes clusters
+- gke-protection-discover-existing-function-[random-hex] - Cloud Function that discovers existing GKE clusters
+
+#### _Storage Resources_
+
+- [random-hex]-gke-protection-source - Cloud Storage bucket that stores function source code
+
+#### _Pub/Sub Resources_
+
+- crowdstrike-gke-protection-feed-topic - Pub/Sub topic that receives asset change notifications
+
+#### _IAM Bindings_
+
+- Cloud Run Invoker role (roles/run.invoker) granted to allUsers for both Cloud Functions
+- Pub/Sub Publisher role (roles/pubsub.publisher) granted to specified service account
+
+### How does the automation work
+
+The automation is broken into two parts, **Cluster Protection** and **Cluster Discovery**.
+
+#### Cluster Discovery
+
+This function can be triggered after the initial deployment, or on demand by sending a message to the function endpoint. The automation discovers existing clusters within a given scope, and send a payload with the cluster name to the pub/sub topic the Cluster Protection function is subscribed to.
+
+#### Cluster Protection
+
+This function is triggered when a new gke cluster is created and a en event from the asset feed is sent to the pub/sub topic the function is subscribed to.
+The automation first tries to find an retrieve the cluster metadata. Once the metadata is retrieved, the automation waits until the cluster is in a ready state, and creates a kubeconfig and connects to the cluster. The automation first checks to see if the kubernetes operator namespace is already created and there are pods actively running, if this is the case it skips deploying the operator, otherwise the operator is deployed. It then checks to see if there is `FalconDeployment` resource deployed, if not, it deployed the FalconDeployment CRD configured with your Falcon ClientID and ClientSecret.
 
 ## Prerequisites
 
@@ -31,11 +73,12 @@ The following APIs need to be enabled.
 - Cloud Asset
 - Pub Sub
 
-Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
+> [!NOTE]
+> Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
 
 **Provision Service Account**
 
-A service account needs to be created. The service account must have the following roles at the *Scope* you want to be protected.
+A service account needs to be created. The service account must have the following roles at the _Scope_ you want to be protected.
 
 - Cloud Asset Viewer
 - Kubernetes Engine Admin
@@ -43,6 +86,8 @@ A service account needs to be created. The service account must have the followi
 ## Deployment
 
 ### Deployment Scopes
+
+Identify at what scope you want to protect your GKE clusters
 
 - **Organization**: Will discover and protect clusters for all projects within a given organization
 - **Folder**: Will discover and protect clusters for all projects within a given folder
@@ -63,7 +108,7 @@ The script will ask you for a series of values:
 - FALCON_CLIENT_SECRET - Client Secret for falcon api
 - LOCATION - GCP location to deploy to
 - SERVICE_ACCOUNT_EMAIL - Email of the service account that has required roles
-- SCOPE - Chose deployment scope. Must be one of projects, folders, organizations
+- SCOPE - Chose deployment scope. Must be one of `projects`, `folders`, `organizations`
 - SCOPE_IDENTIFIER - you will need to supply one of the following values depending on the scope selected
   - organizations: organization id
   - folders: folder id
@@ -82,7 +127,7 @@ The install script will ask you if you want to discover and protect existing clu
 If you choose not to protect existing clusters, you can trigger it by executing
 
 ```shell
-...
+./protect_existing.sh <deployment-region> <deployment-project>
 ```
 
 ## Contributing
