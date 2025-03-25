@@ -103,13 +103,13 @@ Start the deployment process by executing the following command in the root dire
 
 The script will ask you for a series of values:
 
-- DEPLOYMENT_PROJECT_ID - Account solution should be deployed in
-- FALCON_CLIENT_ID - Client ID for falcon api
-- FALCON_CLIENT_SECRET - Client Secret for falcon api
-- LOCATION - GCP location to deploy to
-- SERVICE_ACCOUNT_EMAIL - Email of the service account that has required roles
-- SCOPE - Chose deployment scope. Must be one of `projects`, `folders`, `organizations`
-- SCOPE_IDENTIFIER - you will need to supply one of the following values depending on the scope selected
+- **DEPLOYMENT_PROJECT_ID** - Account solution should be deployed in
+- **FALCON_CLIENT_ID** - Client ID for falcon api
+- **FALCON_CLIENT_SECRET** - Client Secret for falcon api
+- **LOCATION** - GCP location to deploy to
+- **SERVICE_ACCOUNT_EMAIL** - Email of the service account that has required roles
+- **SCOPE** - Chose deployment scope. Must be one of `projects`, `folders`, `organizations`
+- **SCOPE_IDENTIFIER** - you will need to supply one of the following values depending on the scope selected
   - organizations: organization id
   - folders: folder id
   - projects: project id, or project name
