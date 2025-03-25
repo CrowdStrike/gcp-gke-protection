@@ -14,7 +14,7 @@ The solution resources are built and managed through Terraform. The terraform te
 
 #### _Asset Feed Resources_
 >
-> [!NOTE]
+> [!Tip]
 > Only one of the following resources will be deployed depending on scope you choose.
 
 - crowdstrike-gke-protection-organization-feed - Asset feed that monitors GKE cluster events at organization level
