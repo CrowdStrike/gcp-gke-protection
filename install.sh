@@ -1,34 +1,7 @@
 #!/bin/bash
-
 set -e # Exit on any error
 
-# Colors and formatting
-BOLD='\033[1m'
-GREEN='\033[0;32m'
-BLUE='\033[0;34m'
-RED='\033[0;31m'
-YELLOW='\033[1;33m'
-NC='\033[0m' # No Color
-
-# Function to print section headers
-print_header() {
-    echo -e "\n${BOLD}${BLUE}=== $1 ===${NC}\n"
-}
-
-# Function to print success messages
-print_success() {
-    echo -e "${GREEN}✓ $1${NC}"
-}
-
-# Function to print error messages
-print_error() {
-    echo -e "${RED}✗ $1${NC}"
-}
-
-# Function to print warning/info messages
-print_info() {
-    echo -e "${YELLOW}ℹ $1${NC}"
-}
+source utils.sh
 
 # Function to validate prerequisites
 validate_prerequisites() {
@@ -194,6 +167,8 @@ main() {
             print_error "Cluster protection failed. Exiting..."
             exit 1
         fi
+    else
+        print_info "To protect existing clusters at a later time, you can execute './protect_existing.sh $LOCATION $DEPLOYMENT_PROJECT_ID'"
     fi
 
     print_success "\nDeployment completed successfully!"
