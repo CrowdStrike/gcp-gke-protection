@@ -132,10 +132,9 @@ If you choose not to protect existing clusters, you can trigger it by executing
 
 ## Contributing
 
-Contributions are welcome! Please read our [Contributing Guide](CONTRIBUTING.md) for details on how to submit pull requests.
+Contributions are welcome! Please read our [Contributing Guide](https://github.com/CrowdStrike/community/blob/1563cc7f54ed6426f5cc15ae22c8c2636c06885f/docs/contributing.md) for details on how to submit pull requests.
 
 ## Support
-
 
 For additional support, please see the [SUPPORT.md](SUPPORT.md) file.
 
