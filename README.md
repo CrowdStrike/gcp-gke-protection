@@ -2,9 +2,9 @@
    <img src="https://raw.githubusercontent.com/CrowdStrike/falconpy/main/docs/asset/cs-logo.png" alt="CrowdStrike logo" width="500"/>
 </p>
 
-# GKE Cluster Protection
+# GCP GKE Protection
 
-GKE Cluster Protection is a solution that can be used to deploy the Falcon Operator, Falcon Access Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
+GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Access Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
 
 ## Architecture
 

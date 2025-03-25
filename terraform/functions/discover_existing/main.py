@@ -36,7 +36,7 @@ def main(request):
     discovered_clusters = discover_existing_clusters(projects)
     for cluster in discovered_clusters:
         send_to_pubsub(cluster)
-    return f"GKE cluster protection initiated for {len(discovered_clusters)} existing cluster(s). \n"
+    return f"GCP GKE Protection initiated for {len(discovered_clusters)} existing cluster(s). \n"
 
 
 def discover_existing_clusters(projects):
@@ -73,7 +73,6 @@ def send_to_pubsub(cluster):
     payload = {"asset": {"name": cluster.replace("https:", "").replace("/v1", "")}}
     payload_string = json.dumps(payload)
     string_bytes = payload_string.encode("utf-8")
-
 
     # publish to pbsub topic
     publisher = pubsub_v1.PublisherClient()
