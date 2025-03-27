@@ -42,6 +42,7 @@ check_api_enabled() {
 # Function to deploy terraform
 deploy_terraform() {
     print_header "Deploying Terraform Template"
+    terraform -chdir=terraform init
     terraform -chdir=terraform apply \
         --var "falcon_client_id=${1}" \
         --var "falcon_client_secret=${2}" \
