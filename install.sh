@@ -50,6 +50,7 @@ deploy_terraform() {
         --var "service_account_email=${4}" \
         --var "scope=${5}" \
         --var "scope_identifier=${6}" \
+        --var "deployment_project_id=${7}" \
         --auto-approve
     if [ $? -ne 0 ]; then
         return 1
@@ -153,7 +154,7 @@ main() {
     fi
 
     # Deploy terraform
-    if ! deploy_terraform "$FALCON_CLIENT_ID" "$FALCON_CLIENT_SECRET" "$LOCATION" "$SERVICE_ACCOUNT_EMAIL" "$SCOPE" "$SCOPE_IDENTIFIER"; then
+    if ! deploy_terraform "$FALCON_CLIENT_ID" "$FALCON_CLIENT_SECRET" "$LOCATION" "$SERVICE_ACCOUNT_EMAIL" "$SCOPE" "$SCOPE_IDENTIFIER" "$DEPLOYMENT_PROJECT_ID"; then
         print_error "Terraform deployment failed. Exiting..."
         exit 1
     fi
