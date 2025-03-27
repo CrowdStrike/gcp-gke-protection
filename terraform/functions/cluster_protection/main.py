@@ -207,7 +207,6 @@ def check_pods_are_ready(api_client: ApiClient, namespace_name: str) -> bool:
     return pods_ready
 
 
-
 def download_operator_manifest():
     urllib.request.urlretrieve(FALCON_OPERATOR_URL, "falcon_operator.yaml")
 
@@ -313,7 +312,6 @@ def deploy_falcon_manifest(api_client: ApiClient, manifest_json: Dict[str, Any])
         logging.info("There are no existing Falcon deployments")
         logging.info("Deploying Falcon")
         try:
-            logging.info("Deploying admission controller")
             falcon_deployment = dynamic_client.resources.get(
                 api_version="falcon.crowdstrike.com/v1alpha1", kind="FalconDeployment"
             )

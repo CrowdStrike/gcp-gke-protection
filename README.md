@@ -4,7 +4,7 @@
 
 # GCP GKE Protection
 
-GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Access Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
+GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Admission Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
 
 ## Architecture
 
@@ -116,7 +116,7 @@ The script will ask you for a series of values:
 
 The script will validate that the required APIs have been enabled and then deploy the terraform template to build out the resources required fro cluster protection. If everything is successful, you should see a message at the end similar to this.
 
-\#TODO:Add image of script result.
+![Execution result](assets/installation_complete.png)
 
 #### Post Execution
 
