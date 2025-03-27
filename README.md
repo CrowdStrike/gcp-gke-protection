@@ -4,7 +4,7 @@
 
 # GCP GKE Protection
 
-GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Access Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
+GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Admission Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
 
 ## Architecture
 
