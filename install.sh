@@ -16,6 +16,12 @@ validate_prerequisites() {
     print_info "Checking if Cloud Asset API is enabled..."
     check_api_enabled $1 "cloudasset.googleapis.com" || return 1
 
+    print_info "Checking if Cloud Resource Manager is enabled..."
+    check_api_enabled $1 "cloudresourcemanager.googleapis.com" || return 1
+
+    print_info "Checking if Cloud Build API is enabled..."
+    check_api_enabled $1 "cloudbuild.googleapis.com" || return 1
+
     return 0
 }
 

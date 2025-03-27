@@ -74,7 +74,7 @@ The following APIs need to be enabled.
 - Pub Sub
 
 > [!Tip]
-> Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
+> Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,cloudresourcemanager.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com,cloudbuild.googleapis.com,eventarc.googleapis.com,run.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
 
 **Provision Service Account**
 
