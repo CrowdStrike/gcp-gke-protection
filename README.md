@@ -6,42 +6,59 @@
 
 GCP GKE Protection is a solution that can be used to deploy the Falcon Operator, Falcon Admission Controller, and Falcon Node Sensors on all applicable GKE clusters in an automated fashion.
 
+## Table of Contents
+
+- [Architecture](#architecture)
+  - [Deployed Resources](#deployed-resources)
+  - [Automation Workflow](#automation-workflow)
+- [Prerequisites](#prerequisites)
+  - [CrowdStrike](#crowdstrike)
+  - [GCP](#gcp)
+- [Deployment](#deployment)
+  - [Deployment Scopes](#deployment-scopes)
+  - [Execution](#execution)
+  - [Existing Cluster Discovery Post Deployment](#triggering-existing-cluster-discovery-post-deployment)
+- [Contributing](#contributing)
+- [Support](#support)
+- [License](#license)
+
+
 ## Architecture
 
 ### Deployed Resources
 
 The solution resources are built and managed through Terraform. The terraform templates create the following resources:
 
-#### _Asset Feed Resources_
+#### Asset Feed Resources
 >
 > [!NOTE]
 > Only one of the following resources will be deployed depending on scope you choose.
 
-- crowdstrike-gke-protection-organization-feed - Asset feed that monitors GKE cluster events at organization level
-- crowdstrike-gke-protection-project-feed - Asset feed that monitors GKE cluster events at project level
-- crowdstrike-gke-protection-folder-feed - Asset feed that monitors GKE cluster events at folder level
+- ***crowdstrike-gke-protection-organization-feed*** - Monitors GKE cluster events at organization level
+- ***crowdstrike-gke-protection-project-feed*** - Monitors GKE cluster events at project level
+- ***crowdstrike-gke-protection-folder-feed*** - Monitors GKE cluster events at folder level
 
-#### _Cloud Functions_
+#### Cloud Functions
 
-- gke-protection-cluster-protection-function-[random-hex] - Cloud Function that discovers and installs Falcon sensor on Kubernetes clusters
-- gke-protection-discover-existing-function-[random-hex] - Cloud Function that discovers existing GKE clusters
+- ***gke-protection-cluster-protection-function-[`random-hex`]*** - Cloud Function that discovers and installs Falcon sensor on Kubernetes clusters
+- ***gke-protection-discover-existing-function-[`random-hex`]*** - Cloud Function that discovers existing GKE clusters
 
-#### _Storage Resources_
+#### Storage Resources
 
-- [random-hex]-gke-protection-source - Cloud Storage bucket that stores function source code
+- ***[`random-hex`]-gke-protection-source*** - Cloud Storage bucket that stores function source code
 
-#### _Pub/Sub Resources_
+#### Pub/Sub Resources
 
-- crowdstrike-gke-protection-feed-topic - Pub/Sub topic that receives asset change notifications
+- ***crowdstrike-gke-protection-feed-topic*** - Pub/Sub topic that receives asset change notifications
 
-#### _IAM Bindings_
+#### IAM Bindings
 
-- Cloud Run Invoker role (roles/run.invoker) granted to allUsers for both Cloud Functions
-- Pub/Sub Publisher role (roles/pubsub.publisher) granted to specified service account
+- ***Cloud Run Invoker role (`roles/run.invoker`)*** - Granted to allUsers for both Cloud Functions
+- ***Pub/Sub Publisher role (`roles/pubsub.publisher`)*** - Granted to specified service account
 
-### How does the automation work
+### Automation Workflow
 
-The automation is broken into two parts, **Cluster Protection** and **Cluster Discovery**.
+The automation is broken into two parts; **Cluster Discovery** and **Cluster Protection**.
 
 #### Cluster Discovery
 
@@ -56,7 +73,7 @@ The automation first tries to find an retrieve the cluster metadata. Once the me
 
 ### CrowdStrike
 
-**Provision Credentials**
+#### Provision Credentials
 
 API credentials with the following scopes need to be created
 
@@ -65,7 +82,7 @@ API credentials with the following scopes need to be created
 
 ### GCP
 
-**Enable APIs**
+#### Enable APIs
 
 The following APIs need to be enabled.
 
@@ -76,7 +93,7 @@ The following APIs need to be enabled.
 > [!Tip]
 > Enable all APIs by clicking [this URL](https://console.cloud.google.com/apis/enableflow?apiid=cloudfunctions.googleapis.com,cloudresourcemanager.googleapis.com,pubsub.googleapis.com,cloudasset.googleapis.com,cloudbuild.googleapis.com,eventarc.googleapis.com,run.googleapis.com&redirect=https:%2F%2Fcloud.google.com)
 
-**Provision Service Account**
+#### Provision Service Account
 
 A service account needs to be created. The service account must have the following roles at the _Scope_ you want to be protected.
 
