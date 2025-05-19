@@ -22,7 +22,6 @@ GCP GKE Protection is a solution that can be used to deploy the Falcon Operator,
 - [Support](#support)
 - [License](#license)
 
-
 ## Architecture
 
 ### Deployed Resources
@@ -77,8 +76,8 @@ The automation first tries to find an retrieve the cluster metadata. Once the me
 
 API credentials with the following scopes need to be created
 
-- Falcon Container Image
-- Falcon Images Download
+- Falcon Container Image (Read)
+- Falcon Images Download (Read)
 
 ### GCP
 
@@ -95,10 +94,11 @@ The following APIs need to be enabled.
 
 #### Provision Service Account
 
-A service account needs to be created. The service account must have the following roles at the _Scope_ you want to be protected.
+A service account needs to be created. The service account must have the following roles at the *Scope* you want to be protected.
 
 - Cloud Asset Viewer
 - Kubernetes Engine Admin
+- Cloud Run Jobs Executor
 
 ## Deployment
 
