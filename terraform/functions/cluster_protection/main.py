@@ -33,6 +33,9 @@ FALCON_ADMISSION_CONTROLLER_URL = (
 FALCON_OPERATOR_URL = "https://github.com/crowdstrike/falcon-operator/releases/latest/download/falcon-operator.yaml"
 FALCON_CLIENT_ID = os.environ["FALCON_CLIENT_ID"]
 FALCON_CLIENT_SECRET = os.environ["FALCON_CLIENT_SECRET"]
+FALCON_AUTO_UPDATE = os.environ.get("FALCON_AUTO_UPDATE", "off")
+FALCON_UPDATE_POLICY = os.environ.get("FALCON_UPDATE_POLICY", "")
+FALCON_SENSOR_TAGS = os.environ.get("FALCON_SENSOR_TAGS", "")
 
 
 def main(data: Dict[str, Any], context: Any) -> None:
@@ -55,8 +58,6 @@ def main(data: Dict[str, Any], context: Any) -> None:
         cluster_name = asset_name.split("/")[8]
         project_id = asset_name.split("/")[4]
         zone = asset_name.split("/")[6]
-        is_autopilot = True
-
         logging.info(f"asset name: {asset_name}")
         logging.info(f"cluster_name: {cluster_name}")
         logging.info(f"project_id: {project_id}")
@@ -79,6 +80,8 @@ def main(data: Dict[str, Any], context: Any) -> None:
             elif cluster_status in ["RUNNING"]:
                 logging.info("Deploying operator on cluster")
             cluster_status_check_counter += 1
+
+        is_autopilot = bool(cluster.autopilot and cluster.autopilot.enabled)
 
         # retrieve manifests
         operator_manifest = download_operator_manifest()
@@ -126,6 +129,7 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
         },
     }
 
+    # Start with base autopilot config
     autopilot_config = {
         "backend": "bpf",
         "gke": {"autopilot": True},
@@ -133,15 +137,41 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
         "tolerations": [{"effect": "NoSchedule", "operator": "Equal", "key": "kubernetes.io/arch", "value": "amd64"}],
     }
 
-    node_config = {"node": autopilot_config}
+    # Build node config (applied to all clusters, not just autopilot)
+    node_config = {}
 
+    # Add advanced settings if specified
+    if FALCON_AUTO_UPDATE != "off" or FALCON_UPDATE_POLICY:
+        node_config["advanced"] = {}
+
+        if FALCON_AUTO_UPDATE != "off":
+            node_config["advanced"]["autoUpdate"] = FALCON_AUTO_UPDATE
+            logging.info(f"Auto-update enabled with mode: {FALCON_AUTO_UPDATE}")
+
+        if FALCON_UPDATE_POLICY:
+            node_config["advanced"]["updatePolicy"] = FALCON_UPDATE_POLICY
+            logging.info(f"Using update policy: {FALCON_UPDATE_POLICY}")
+
+    # Merge autopilot-specific config if needed
     if is_autopilot:
-        manifest["spec"]["falconNodeSensor"] = node_config
+        node_config.update(autopilot_config)
+
+    # Add sensor tags if specified (goes in falcon spec, not node spec)
+    if FALCON_SENSOR_TAGS:
+        if "falcon" not in manifest["spec"]:
+            manifest["spec"]["falcon"] = {}
+        manifest["spec"]["falcon"]["tags"] = [t.strip() for t in FALCON_SENSOR_TAGS.split(",")]
+        logging.info(f"Adding sensor tags: {FALCON_SENSOR_TAGS}")
+
+    # Add node config to manifest
+    manifest["spec"]["falconNodeSensor"] = {"node": node_config}
 
     # convert back to yaml and write file
     manifest_yaml = yaml.dump(manifest)
     with open("node_sensor_manifest.yaml", "w") as yaml_file:
         yaml_file.write(manifest_yaml)
+
+    logging.debug(f"Generated manifest:\n{manifest_yaml}")
     return manifest
 
 
