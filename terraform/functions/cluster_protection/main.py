@@ -58,8 +58,6 @@ def main(data: Dict[str, Any], context: Any) -> None:
         cluster_name = asset_name.split("/")[8]
         project_id = asset_name.split("/")[4]
         zone = asset_name.split("/")[6]
-        is_autopilot = True
-
         logging.info(f"asset name: {asset_name}")
         logging.info(f"cluster_name: {cluster_name}")
         logging.info(f"project_id: {project_id}")
@@ -82,6 +80,8 @@ def main(data: Dict[str, Any], context: Any) -> None:
             elif cluster_status in ["RUNNING"]:
                 logging.info("Deploying operator on cluster")
             cluster_status_check_counter += 1
+
+        is_autopilot = bool(cluster.autopilot and cluster.autopilot.enabled)
 
         # retrieve manifests
         operator_manifest = download_operator_manifest()
@@ -160,7 +160,7 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
     if FALCON_SENSOR_TAGS:
         if "falcon" not in manifest["spec"]:
             manifest["spec"]["falcon"] = {}
-        manifest["spec"]["falcon"]["tags"] = FALCON_SENSOR_TAGS
+        manifest["spec"]["falcon"]["tags"] = [t.strip() for t in FALCON_SENSOR_TAGS.split(",")]
         logging.info(f"Adding sensor tags: {FALCON_SENSOR_TAGS}")
 
     # Add node config to manifest
