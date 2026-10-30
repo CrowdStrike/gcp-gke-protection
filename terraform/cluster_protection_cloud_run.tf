@@ -58,7 +58,7 @@ resource "google_cloud_run_service_iam_member" "cluster_protection_member" {
   location = google_cloudfunctions2_function.cluster_protection.location
   service  = google_cloudfunctions2_function.cluster_protection.name
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${var.service_account_email}"
 }
 
 output "cluster_protection_function_uri" {
