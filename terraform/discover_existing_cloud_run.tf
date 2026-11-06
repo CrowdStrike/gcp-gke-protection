@@ -48,7 +48,7 @@ resource "google_cloud_run_service_iam_member" "member" {
   location = google_cloudfunctions2_function.discover_existing.location
   service  = google_cloudfunctions2_function.discover_existing.name
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${var.service_account_email}"
 }
 
 output "discover_existing_function_uri" {

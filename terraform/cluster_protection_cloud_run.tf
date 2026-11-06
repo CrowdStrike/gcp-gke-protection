@@ -36,13 +36,20 @@ resource "google_cloudfunctions2_function" "cluster_protection" {
   }
 
   service_config {
-    max_instance_count = 1
-    available_memory   = "256M"
-    timeout_seconds    = 360
+    max_instance_count    = 1
+    available_memory      = "256M"
+    timeout_seconds       = 360
     service_account_email = var.service_account_email
+
     environment_variables = {
-    FALCON_CLIENT_ID = "${var.falcon_client_id}"
-    FALCON_CLIENT_SECRET = "${var.falcon_client_secret}"
+      FALCON_CLIENT_ID = var.falcon_client_id
+    }
+
+    secret_environment_variables {
+      key        = "FALCON_CLIENT_SECRET"
+      project_id = var.deployment_project_id
+      secret     = google_secret_manager_secret.falcon_client_secret.secret_id
+      version    = "latest"
     }
   }
 
@@ -58,7 +65,7 @@ resource "google_cloud_run_service_iam_member" "cluster_protection_member" {
   location = google_cloudfunctions2_function.cluster_protection.location
   service  = google_cloudfunctions2_function.cluster_protection.name
   role     = "roles/run.invoker"
-  member   = "allUsers"
+  member   = "serviceAccount:${var.service_account_email}"
 }
 
 output "cluster_protection_function_uri" {

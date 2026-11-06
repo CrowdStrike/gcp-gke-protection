@@ -138,10 +138,6 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
     if is_autopilot:
         manifest["spec"]["falconNodeSensor"] = node_config
 
-    # convert back to yaml and write file
-    manifest_yaml = yaml.dump(manifest)
-    with open("node_sensor_manifest.yaml", "w") as yaml_file:
-        yaml_file.write(manifest_yaml)
     return manifest
 
 

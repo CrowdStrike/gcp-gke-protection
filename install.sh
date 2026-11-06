@@ -48,10 +48,12 @@ check_api_enabled() {
 # Function to deploy terraform
 deploy_terraform() {
     print_header "Deploying Terraform Template"
+    # Pass client_secret via env var, not --var, to avoid process listing exposure (SOLAR-2601)
+    TF_VAR_falcon_client_secret="${2}" \
     terraform -chdir=terraform init
+    TF_VAR_falcon_client_secret="${2}" \
     terraform -chdir=terraform apply \
         --var "falcon_client_id=${1}" \
-        --var "falcon_client_secret=${2}" \
         --var "location=${3}" \
         --var "service_account_email=${4}" \
         --var "scope=${5}" \
