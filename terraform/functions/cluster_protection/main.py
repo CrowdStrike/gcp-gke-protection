@@ -89,6 +89,11 @@ def main(data: Dict[str, Any], context: Any) -> None:
 
         # protect cluster
         deploy_operator(api_client)
+
+        # Store Falcon API credentials in a Kubernetes Secret so they are not
+        # embedded in plaintext inside the FalconDeployment CR spec.
+        ensure_falcon_api_secret(api_client, "falcon-operator")
+
         deploy_falcon_manifest(api_client, falcon_deployment_manifest)
         logging.info(f"Cluster {cluster_name} protected.")
         return
@@ -114,9 +119,13 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
         "kind": "FalconDeployment",
         "metadata": {"name": "falcon-deployment"},
         "spec": {
+            "falconSecret": {
+                "enabled": True,
+                "namespace": "falcon-operator",
+                "secretName": "falcon-api-creds",
+            },
             "falcon_api": {
                 "client_id": FALCON_CLIENT_ID,
-                "client_secret": FALCON_CLIENT_SECRET,
                 "cloud_region": "us-2",
             },
             "deployAdmissionController": True,
@@ -139,6 +148,35 @@ def configure_falcon_deployment_manifest(is_autopilot: bool) -> Dict[str, Any]:
         manifest["spec"]["falconNodeSensor"] = node_config
 
     return manifest
+
+
+def ensure_falcon_api_secret(api_client: ApiClient, namespace: str) -> None:
+    """Create or update a Kubernetes Secret holding the Falcon API credentials.
+
+    Uses the key names expected by falcon-operator v1.16+ FalconSecret injection:
+    falcon-client-id and falcon-client-secret.
+    """
+    secret_name = "falcon-api-creds"
+    v1 = client.CoreV1Api(api_client)
+
+    secret_body = client.V1Secret(
+        metadata=client.V1ObjectMeta(name=secret_name, namespace=namespace),
+        string_data={
+            "falcon-client-id": FALCON_CLIENT_ID,
+            "falcon-client-secret": FALCON_CLIENT_SECRET,
+        },
+    )
+
+    try:
+        v1.read_namespaced_secret(name=secret_name, namespace=namespace)
+        v1.replace_namespaced_secret(name=secret_name, namespace=namespace, body=secret_body)
+        logging.info("Updated existing Falcon API secret in %s/%s", namespace, secret_name)
+    except client.exceptions.ApiException as e:
+        if e.status == 404:
+            v1.create_namespaced_secret(namespace=namespace, body=secret_body)
+            logging.info("Created Falcon API secret in %s/%s", namespace, secret_name)
+        else:
+            raise
 
 
 def check_resources_deployed(api_client: ApiClient, namespace_name: str) -> bool:
