@@ -1,6 +1,7 @@
 import subprocess
 import base64
 import json
+import re
 import google.cloud.logging
 import time
 import logging
@@ -33,6 +34,32 @@ FALCON_ADMISSION_CONTROLLER_URL = (
 FALCON_OPERATOR_URL = "https://github.com/crowdstrike/falcon-operator/releases/latest/download/falcon-operator.yaml"
 FALCON_CLIENT_ID = os.environ["FALCON_CLIENT_ID"]
 FALCON_CLIENT_SECRET = os.environ["FALCON_CLIENT_SECRET"]
+DEPLOYMENT_PROJECT = os.environ["DEPLOYMENT_PROJECT"]
+
+# Expected asset name format from Cloud Asset feed:
+# //container.googleapis.com/projects/{project}/locations/{zone}/clusters/{cluster}
+_ASSET_NAME_RE = re.compile(
+    r"^//container\.googleapis\.com/projects/([^/]+)/locations/([^/]+)/clusters/([^/]+)$"
+)
+
+
+def _parse_asset_name(asset_name: str):
+    """Parse and validate a Cloud Asset feed asset name for a GKE cluster.
+
+    Returns (project_id, zone, cluster_name) or raises ValueError if the
+    asset name does not match the expected format or references an unexpected
+    project.
+    """
+    m = _ASSET_NAME_RE.match(asset_name)
+    if not m:
+        raise ValueError(f"Unexpected asset name format: {asset_name!r}")
+    project_id, zone, cluster_name = m.group(1), m.group(2), m.group(3)
+    if project_id != DEPLOYMENT_PROJECT:
+        raise ValueError(
+            f"asset name references project {project_id!r}; "
+            f"expected {DEPLOYMENT_PROJECT!r}"
+        )
+    return project_id, zone, cluster_name
 
 
 def main(data: Dict[str, Any], context: Any) -> None:
@@ -50,11 +77,9 @@ def main(data: Dict[str, Any], context: Any) -> None:
     try:
         # decode payload
         payload = json.loads(base64.b64decode(data["data"]).decode("utf-8"))
-        # parse fields
+        # parse and validate fields — rejects payloads that reference unexpected projects
         asset_name = payload["asset"]["name"]
-        cluster_name = asset_name.split("/")[8]
-        project_id = asset_name.split("/")[4]
-        zone = asset_name.split("/")[6]
+        project_id, zone, cluster_name = _parse_asset_name(asset_name)
         is_autopilot = True
 
         logging.info(f"asset name: {asset_name}")
