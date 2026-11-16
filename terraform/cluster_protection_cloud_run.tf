@@ -42,7 +42,8 @@ resource "google_cloudfunctions2_function" "cluster_protection" {
     service_account_email = var.service_account_email
 
     environment_variables = {
-      FALCON_CLIENT_ID = var.falcon_client_id
+      FALCON_CLIENT_ID     = var.falcon_client_id
+      DEPLOYMENT_PROJECT   = var.deployment_project_id
     }
 
     secret_environment_variables {
